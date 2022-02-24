@@ -33,9 +33,14 @@ class Customer:
         self.skills_by_name[skill.name] = skill
 
     def upgrade_skill(self, skill):
-        self.skills.remove(skill)
+        if self.skills_by_name[skill.name] > skill:
+            return
+
+        self.skills.remove(self.skills_by_name[skill.name])
+
         skill.level += 1
         self.skills.add(skill)
+        self.skills_by_name[skill.name] = skill
 
     def have_skill(self, skill):
         if skill in self.skills:
@@ -146,33 +151,55 @@ def find_people_for_project(project: Project, customers):
         return answer
 
 
-def solve(filepath):
-    print('started ' + filepath + '...')
-    customers, projects = read_file(filepath)
-    projects = list(sorted(projects, key=lambda x: x.points, reverse=True))
-
-    solved_projects = []
+def try_to_solve(customers, projects):
+    projects = list(sorted(projects, key=lambda x: x.points or -x.deadline or -x.duration, reverse=True))
 
     for project in projects:
         project_customers = find_people_for_project(project, customers)
 
         if not project_customers:
             continue
+        
+        for i in range(len(project_customers)):
+            project_customers[i].upgrade_skill(project.requirements[i])
 
-        solved_projects.append((project, project_customers))
+        return project, project_customers
 
+
+
+def save_answer(filepath, answer):
     with open(filepath.replace('.in.', '.out.'), 'w') as f:
-        f.write(str(len(solved_projects)) + '\n')
+        f.write(str(len(answer)) + '\n')
 
-        for project, customers in solved_projects:
+        for project, customers in answer:
             f.write(project.name + '\n')
             f.write(" ".join([customer.name for customer in customers]) + '\n')
 
 
+def solve(filepath):
+    print('started' + filepath + '...')
+    customers, projects = read_file(filepath)
+    projects = set(projects)
+    solved_projects = set()
+    answer = []
+
+    while True:
+        projects.difference_update(solved_projects)
+        new_solved_project = try_to_solve(customers, projects)
+        
+        if not new_solved_project:
+            break
+        
+        solved_projects.add(new_solved_project[0])
+        answer.append(new_solved_project)
+
+    save_answer(filepath, answer)
+
+
 if __name__ == '__main__':
-    solve('input_data/a_an_example.in.txt')
-    solve('input_data/b_better_start_small.in.txt')
+    # solve('input_data/a_an_example.in.txt')
+    # solve('input_data/b_better_start_small.in.txt')
     solve('input_data/c_collaboration.in.txt')
-    solve('input_data/d_dense_schedule.in.txt')
+    # solve('input_data/d_dense_schedule.in.txt')
     solve('input_data/e_exceptional_skills.in.txt')
     solve('input_data/f_find_great_mentors.in.txt')
