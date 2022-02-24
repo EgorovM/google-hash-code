@@ -42,12 +42,12 @@ class Customer:
             return True
 
         if skill.name in self.skills_by_name:
-            return self.skills_by_name[skill.name].level >= skill.name
+            return self.skills_by_name[skill.name] > skill
 
         return False
 
     def __repr__(self):
-        return f"{self.name} {self.level}"
+        return f"{self.name}"
 
 
 class Project:
@@ -114,10 +114,65 @@ def suitable_requirements(project, customer):
 
 def find_people_for_project(project: Project, customers):
     req_counts = defaultdict(int)
+    req_customers = defaultdict(set)
 
     for customer in customers:
         requirements = suitable_requirements(project, customer)
 
         for req in requirements:
             req_counts[req] += 1
+            req_customers[req].add(customer)
 
+    customers = set()
+    answer = [None for _ in range(len(project.requirements))]
+
+    req_counts = sorted(req_counts.items(), key=lambda x: x[1])
+
+    for req, _ in req_counts:
+        find_suitable = False
+
+        for customer in req_customers[req]:
+            if not customer in customers:
+                find_suitable = True
+                customers.add(customer)
+                break
+
+        if not find_suitable:
+            return
+
+        answer[project.requirements.index(req)] = customer
+
+    if None not in answer:
+        return answer
+
+
+def solve(filepath):
+    print('started ' + filepath + '...')
+    customers, projects = read_file(filepath)
+    projects = list(sorted(projects, key=lambda x: x.points, reverse=True))
+
+    solved_projects = []
+
+    for project in projects:
+        project_customers = find_people_for_project(project, customers)
+
+        if not project_customers:
+            continue
+
+        solved_projects.append((project, project_customers))
+
+    with open(filepath.replace('.in.', '.out.'), 'w') as f:
+        f.write(str(len(solved_projects)) + '\n')
+
+        for project, customers in solved_projects:
+            f.write(project.name + '\n')
+            f.write(" ".join([customer.name for customer in customers]) + '\n')
+
+
+if __name__ == '__main__':
+    solve('input_data/a_an_example.in.txt')
+    solve('input_data/b_better_start_small.in.txt')
+    solve('input_data/c_collaboration.in.txt')
+    solve('input_data/d_dense_schedule.in.txt')
+    solve('input_data/e_exceptional_skills.in.txt')
+    solve('input_data/f_find_great_mentors.in.txt')
