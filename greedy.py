@@ -1,3 +1,4 @@
+import asyncio
 from collections import defaultdict
 
 
@@ -165,8 +166,6 @@ def try_to_solve(customers, projects):
 
         return project, project_customers
 
-
-
 def save_answer(filepath, answer):
     with open(filepath.replace('.in.', '.out.'), 'w') as f:
         f.write(str(len(answer)) + '\n')
@@ -176,30 +175,30 @@ def save_answer(filepath, answer):
             f.write(" ".join([customer.name for customer in customers]) + '\n')
 
 
-def solve(filepath):
-    print('started' + filepath + '...')
+async def solve(filepath):
     customers, projects = read_file(filepath)
     projects = set(projects)
-    solved_projects = set()
     answer = []
 
     while True:
-        projects.difference_update(solved_projects)
         new_solved_project = try_to_solve(customers, projects)
         
         if not new_solved_project:
             break
         
-        solved_projects.add(new_solved_project[0])
+        projects.difference_update([new_solved_project[0]])
         answer.append(new_solved_project)
 
     save_answer(filepath, answer)
 
 
+
 if __name__ == '__main__':
+    asyncio.run(solve('input_data/f_find_great_mentors.in.txt'))
+
     # solve('input_data/a_an_example.in.txt')
     # solve('input_data/b_better_start_small.in.txt')
-    solve('input_data/c_collaboration.in.txt')
+    # solve('input_data/c_collaboration.in.txt')
     # solve('input_data/d_dense_schedule.in.txt')
-    solve('input_data/e_exceptional_skills.in.txt')
-    solve('input_data/f_find_great_mentors.in.txt')
+    # solve('input_data/e_exceptional_skills.in.txt')
+    # solve('input_data/f_find_great_mentors.in.txt')
